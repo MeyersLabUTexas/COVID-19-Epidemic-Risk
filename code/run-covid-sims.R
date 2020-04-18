@@ -77,11 +77,7 @@ make_case_risk_plot(r_not_vect=r_not, det_prob=0.1)
 ## Get case summary statistics
 get_summary_stats(cty_data)
   
-  
-  
-  
-
-
-
-
+## Number of county remaining with less than 5 detected cases  
+sub=subset(cty_data, cases<5)
+length(sub$county)
 

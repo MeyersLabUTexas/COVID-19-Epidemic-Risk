@@ -2,26 +2,28 @@
 ## Code for simulations
 ###############################
 
-#' Default Zika parameters for sims
-#'
-#' A function that gives a list of parameters for running a zika simulation.
-#' Defaults to parameters for Zika with no introductions.
-#'
-#' @param r_not value specifying outbreak R0, which automatically modulates transmission rate
+#' Default covid parameters for sims
+#' 
+#' A function that gives a list of parameters for running a covid simulation.
+#' Defaults to parameters for covid with no introductions.
+#' @param base_r_not Effective reproduction number: value specifying outbreak R0, which automatically modulates transmission rate
+#' @param base_det_prob Daily detecting rate: The daily probability of an infectious individual being detected
+#' @param intro_rate Daily rate of new introductions according to poisson distribution
 #' @param infBoxes Integer specifying number of infectious class boxes
 #' @param incBoxes Integer specifying number of incubation class boxes
-#' @param recov_p Daily probability of recovery for each infectious box
+#' @param gen_time Generation time (days): Average length of time between consecutive exposures T_G = T_E + (T_I/2)
+#' @param inf_period Infectious period (days)
+#' @param exp_period Latent period (days)
 #' @param incub_rate Daily probability of transitioning for each incubation box
+#' @param recov_p Daily probability of recovery for each infectious box
+#' @param base_dispersion Total dispersion parameter of negative binomial distribution
+#' @param dispersion Daily dispersion parameter of negative binomial distribution
 #' @param prop_p Daily Poisson rate of transmission for each infectious individual
 #' @param e_thresh Maximum number of cumulative infections before sim ends
 #' @param prob_symp Probability that cases are symptomatic (haven't tested anything <1)
 #' @param dis_prob_symp Probability of discovery for symptomatic individuals
 #' @param dis_prob_asymp Probability of discovery for asymptomatic individuals
-#' @param intro_rate Daily rate of new introductions according to poisson distribution
-#' @return A list of length num_reps, where each component is a single call to run_zika_sim.
-#' @export
-#' @examples
-#' zika_def_parms()
+#' @return A list of length num_reps, where each component is a single call to run_covid_sim.
 covid_params_fn = function(base_r_not           = 1.5,
                            base_det_prob        = 0.1,
                            intro_rate           = 0,
@@ -39,20 +41,12 @@ covid_params_fn = function(base_r_not           = 1.5,
                            prob_symp            = 1,
                            dis_prob_symp        = base_det_prob/inf_period,
                            dis_prob_asymp       = 0.0
-                           
 ){ return(as.list(environment())) }
 
-
-#' Run multiple zika simulations
-#'
-#' A function to run multiple zika simulations with the same parameters
-#'
-#' @param num_reps An integer.
-#' @param ... A list of parameters to call run_zika_sim.
-#' @return A list of length num_reps, where each component is a single call to run_zika_sim.
-#' @export
-#' @examples
-#' run_n_zika_sims(1, zika_def_parms())
+#' Run multiple covid simulations
+#' 
+#' A function to run multiple covid simulations with the same parameters
+#' @return A list of length num_reps, where each component is a single call to run_covid_sim.
 run_n_covid_sims <- function(num_reps, ...) {
   plyr::rlply(.n = num_reps, .expr = run_covid_sim(...) )
 }
@@ -126,27 +120,9 @@ track_infectious <- function(UI, recov_prob, disc_prob){
 }
 
 
-#' Runs a single zika simulation
-#'
-#' Runs a single stochastic branching process zika simulation according to the model description
-#' in "Real-time Zika Risk assessment in the United States."
-#'
-#' @param params List of named parameters for simulation, starred parameters must be present, but suggested to call zika_def_parms() and alter parms according to specific run (See examples).
-#' @param infBoxes* Integer specifying number of infectious class boxes
-#' @param incBoxes* Integer specifying number of incubation class boxes
-#' @param recov_p* Daily probability of recovery for each infectious box
-#' @param incub_rate* Daily probability of transitioning for each incubation box
-#' @param prop_p* Daily Poisson rate of transmission for each infectious individual
-#' @param e_thresh* Maximum number of cumulative infections before sim ends
-#' @param prob_symp* Probability that cases are symptomatic (haven't tested anything <1)
-#' @param dis_prob_symp* Probability of discovery for symptomatic individuals
-#' @param dis_prob_asymp* Probability of discovery for asymptomatic individuals
-#' @param intro_rate* Daily rate of new introductions according to poisson distribution
+#' Runs a single covid simulation
 #' @return Returns a dataframe that contains the daily evolution of the model compartments
-#' @export
-#' @examples
-#' run_zika_sim(zika_def_parms())
-#' run_zika_sim(zika_def_parms(r_not=0.8, intro_rate=0.1))
+
 run_covid_sim <- function(params) {
   with(params,{
     ## The 4 infected classes all have that number of boxes
@@ -329,6 +305,7 @@ run_covid_sim <- function(params) {
   })
 }
 
+# path for desired .rda
 get_save_path <- function(r_not, 
                           detection_probability, 
                           importation_rate,
@@ -345,7 +322,7 @@ save_covid_runs <- function(r_not,
                             detection_probability, 
                             importation_rate,
                             num_reps,
-                            refresh=FALSE,
+                            refresh=FALSE, # when TRUE will re-write files
                             ...) {
   parms <- covid_params_fn(intro_rate = importation_rate,
                            base_det_prob = detection_probability,

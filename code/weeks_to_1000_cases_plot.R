@@ -1,3 +1,5 @@
+# Code to plot the number of weeks until 1000 cases are reached depending on cases detected
+
 library(tidyverse)
 library(scales)
 load("processed_data/sim_1.5_0.1_0_1e+05.rda")
@@ -52,7 +54,6 @@ time_results %>%
   geom_point() + 
   geom_errorbar() +
   scale_x_continuous(breaks=seq(0,50, 10), labels = c("0", "10th", "20th", "30th", "40th", "50th"))+
-  #cowplot::theme_cowplot() +
   cowplot::background_grid(major = "xy", minor = "xy") +
   labs(x = "Reported Case", y = "Time to 1,000 Cumulative Cases (Weeks)")+
   theme_bw(base_size = 8) -> p1
