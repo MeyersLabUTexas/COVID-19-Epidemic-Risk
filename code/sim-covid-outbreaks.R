@@ -28,7 +28,7 @@ covid_params_fn = function(base_r_not           = 1.5,
                            base_det_prob        = 0.1,                       ## Havers et al. 2020
                            intro_rate           = 0,
                            incBoxes             = 2,                         ## Change based on exp_period being 2.9
-                           infBoxes             = 7,                         ## infectious period assumption 7 He et al.
+                           infBoxes             = 4,                         ## min inf_period is now 4.2
                            gen_time             = 6,                         ## Vary 5-6 from https://elifesciences.org/articles/70767
                            exp_period           = 2.9,                       ## From supplement of PNAS Fox et al. 
                            inf_period           = 2*(gen_time - exp_period), ## Roberts & Heesterbeek 2007                   
