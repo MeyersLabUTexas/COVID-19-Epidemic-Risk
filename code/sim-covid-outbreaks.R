@@ -307,13 +307,13 @@ run_covid_sim <- function(params) {
 
 # path for desired .rda
 get_save_path <- function(r_not, 
-                          gen_time,
+                          gen_interval,
                           num_reps,
                           summary = FALSE){
   if(summary){
-    paste0("../processed_data/county-summary_", r_not, "_", gen_time, "_", num_reps, "_", Sys.Date(), ".rda")
+    paste0("../processed_data/county-summary_", r_not, "_", gen_interval, "_", num_reps, "_", Sys.Date(), ".rda")
   }else {
-    paste0("../processed_data/sim_", r_not, "_", gen_time, "_", num_reps, "_", Sys.Date(), ".rda")  
+    paste0("../processed_data/sim_", r_not, "_", gen_interval, "_", num_reps, "_", Sys.Date(), ".rda")  
   }
 }
 
