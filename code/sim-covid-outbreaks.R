@@ -330,6 +330,7 @@ save_covid_runs <- function(r_not,
   saved_file_path <- get_save_path(r_not, gen_interval, num_reps)
   if(!file.exists(saved_file_path) | refresh){
     print("Running the simulation")
+    print(parms)
     sims <- run_n_covid_sims(num_reps, parms)  
     save(sims, file = saved_file_path)
     print("Simulation completed")
