@@ -25,16 +25,16 @@
 #' @param dis_prob_asymp Probability of discovery for asymptomatic individuals
 #' @return A list of length num_reps, where each component is a single call to run_covid_sim.
 covid_params_fn = function(base_r_not           = 1.5,
-                           base_det_prob        = 0.1,
+                           base_det_prob        = 0.1,                       ## Havers et al. 2020
                            intro_rate           = 0,
-                           incBoxes             = 1,
-                           infBoxes             = 7,
-                           gen_time             = 6,                      ## Bi et al. GT is ~6.3, He et al. 5.8 
-                           inf_period           = 9.5,                    ## infectious period assumption 7+2.5 He et al.
-                           exp_period           = gen_time-(inf_period/2),## Roberts & Heesterbeek 2007
-                           incub_rate           = incBoxes/exp_period, 	  # nu 	  
-                           recov_p              = infBoxes/inf_period,    # delta
-                           base_dispersion      = 0.16,                   # Lloyd-Smith et al. 2005
+                           incBoxes             = 2,                         ## Change based on exp_period being 2.9
+                           infBoxes             = 7,                         ## infectious period assumption 7 He et al.
+                           gen_time             = 6,                         ## Vary 5-6 from https://elifesciences.org/articles/70767
+                           exp_period           = 2.9,                       ## From supplement of PNAS Fox et al. 
+                           inf_period           = 2*(gen_time - exp_period), ## Roberts & Heesterbeek 2007                   
+                           incub_rate           = incBoxes/exp_period, 	     ## nu 	  
+                           recov_p              = infBoxes/inf_period,       ## delta
+                           base_dispersion      = 0.16,                      ## Lloyd-Smith et al. 2005 for SARS
                            dispersion           = base_dispersion/inf_period,  
                            prop_p               = base_dispersion/(base_r_not+base_dispersion), # beta
                            e_thresh             = 2000, # was 500
@@ -307,29 +307,26 @@ run_covid_sim <- function(params) {
 
 # path for desired .rda
 get_save_path <- function(r_not, 
-                          detection_probability, 
-                          importation_rate,
+                          gen_time,
                           num_reps,
                           summary = FALSE){
   if(summary){
-    paste0("processed_data/county-summary_", r_not, "_", detection_probability, "_", importation_rate, "_", num_reps, ".rda")
+    paste0("../processed_data/county-summary_", r_not, "_", gen_time, "_", num_reps, "_", Sys.Date(), ".rda")
   }else {
-    paste0("processed_data/sim_", r_not, "_", detection_probability, "_", importation_rate, "_", num_reps, ".rda")  
+    paste0("../processed_data/sim_", r_not, "_", gen_time, "_", num_reps, "_", Sys.Date(), ".rda")  
   }
 }
 
 save_covid_runs <- function(r_not, 
-                            detection_probability, 
-                            importation_rate,
+                            gen_interval,
                             num_reps,
                             refresh=FALSE, # when TRUE will re-write files
                             ...) {
-  parms <- covid_params_fn(intro_rate = importation_rate,
-                           base_det_prob = detection_probability,
+  parms <- covid_params_fn(gen_time = gen_interval,
                            base_r_not = r_not, 
                            ...)
   
-  saved_file_path <- get_save_path(r_not, detection_probability, importation_rate, num_reps)
+  saved_file_path <- get_save_path(r_not, gen_time, num_reps)
   if(!file.exists(saved_file_path) | refresh){
     print("Running the simulation")
     sims <- run_n_covid_sims(num_reps, parms)  

@@ -78,7 +78,6 @@ plot_county_risk <- function(county_data, state = NULL){
     theme(panel.background = element_rect(color = "white", fill = "white"),
           legend.title=element_text(size=8),
           legend.text=element_text(size=6))
-  
 }
 
 get_summary_stats <- function(county_df, state_stats = "Texas"){
