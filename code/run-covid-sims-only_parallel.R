@@ -12,7 +12,7 @@ tryCatch( { result <- file.exists("sim-covid-outbreaks.R"); print(result) },
           warning = function(w) { print("Can't find the file you're looking for") },
           error = function(e) {an.error.occured1 <<- TRUE})
 stopifnot(an.error.occured1==FALSE)
-source("code/sim-covid-outbreaks.R")
+source("sim-covid-outbreaks.R")
 print("sim file found/added")
 
 ## Setup all of the parameters that need to be run
