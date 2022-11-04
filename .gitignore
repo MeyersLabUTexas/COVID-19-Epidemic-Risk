@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+processed_data/
+code/*.e
+code/*.o

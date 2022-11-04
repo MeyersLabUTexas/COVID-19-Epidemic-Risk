@@ -21,6 +21,7 @@ r_not            = as.double(args[1]) # R0 = 1.1, 1.5, 3
 gen_interval     = as.double(args[2]) # gen_time = 5, 5.5, 6
 run_df           = expand_grid(r_not, gen_interval)
 num_runs         = 100000
+
 ## Run and save simulations across all parameter combinations
 if(!dir.exists("../processed_data/")){
   dir.create("../processed_data/")
