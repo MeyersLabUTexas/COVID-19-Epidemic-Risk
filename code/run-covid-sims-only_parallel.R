@@ -4,7 +4,7 @@
 # Run from inside the code dir
 
 library(tidyverse)
-#print("library found") # if working on new computer ensure tidyverse package was downloaded
+# plyr retired and no longer part of tidyverse, now dplyr or purrr
 
 ## Check file with list of parameters exists
 an.error.occured1 <- FALSE 
