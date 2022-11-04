@@ -322,11 +322,11 @@ save_covid_runs <- function(r_not,
                             num_reps,
                             refresh=FALSE, # when TRUE will re-write files
                             ...) {
-  parms <- covid_params_fn(gen_time = gen_interval,
-                           base_r_not = r_not, 
+  parms <- covid_params_fn(base_r_not = r_not, 
+                           gen_time = gen_interval,
                            ...)
   
-  saved_file_path <- get_save_path(r_not, gen_time, num_reps)
+  saved_file_path <- get_save_path(r_not, gen_interval, num_reps)
   if(!file.exists(saved_file_path) | refresh){
     print("Running the simulation")
     sims <- run_n_covid_sims(num_reps, parms)  
