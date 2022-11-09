@@ -4,8 +4,8 @@ library(ggplot2)
 
 pop_data <- read_csv("raw_data/county_pop_2019.csv")
 cty_case_data <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
-epi_probs=read.csv("processed_data/epi_prob_data_1.5_0.1_0_1e+05.csv") # R0=1.5
-epi_prob3=read.csv("processed_data/epi_prob_data_3_0.1_0_1e+05.csv") # R0=3.0
+epi_probs=read.csv("processed_data/original_data/epi_prob_data_1.5_0.1_0_1e+05.csv") # R0=1.5
+epi_prob3=read.csv("processed_data/original_data/epi_prob_data_3_0.1_0_1e+05.csv") # R0=3.0
 
 all_counties = usmap::us_map(regions = "counties")  %>% 
   as_tibble() %>% 
@@ -79,11 +79,11 @@ mean_se_df$epi_label[11] = "10+"
 epi_plot=
   ggplot(data=mean_se_df, aes(x=case_label))+
   geom_ribbon(aes(ymin=prob_epidemic*100, ymax=prob_epidemic3*100, fill="Estimated"), alpha = 0.1)+
-  geom_line(aes(y=prob_increase1, color="1", linetype= "1"), size=0.3)+
+  geom_line(aes(y=prob_increase1, color="1", linetype= "1"), linewidth=0.3)+
   geom_point(aes(y=prob_increase1, color="1", shape="1"), size=1)+
-  geom_line(aes(y=prob_increase5, color="5", linetype= "5"), size=0.3)+
+  geom_line(aes(y=prob_increase5, color="5", linetype= "5"), linewidth=0.3)+
   geom_point(aes(y=prob_increase5, color="5", shape="5"), size=1)+
-  geom_line(aes(y=prob_increase10, color="10", linetype= "10"), size=0.3)+
+  geom_line(aes(y=prob_increase10, color="10", linetype= "10"), linewidth=0.3)+
   geom_point(aes(y=prob_increase10, color="10", shape="10"), size=1)+
   scale_x_continuous(breaks=seq(0, 10, 1), label=mean_se_df$epi_label)+
   labs(x = "Cumulative reported cases (March 16)",
@@ -104,8 +104,13 @@ epi_plot=
   theme_bw(base_size = 8)+
   theme(panel.grid.minor = element_blank(), legend.text.align=0, panel.grid.major.x = element_blank()) #legend.position = c(0.8, 0.28)
 
-png(file="figures/case_increase_by_risk.png",
-    width=1250, height=960, units = "px")
+# png(file="figures/original_data/case_increase_by_risk.png",
+#     width=1250, height=960, units = "px")
+# plot(epi_plot)
+# dev.off()
+
+png(file="figures/original_data/case_increase_by_risk.png",
+    width=4.25,height=3.25, units = "in", res=1200)
 plot(epi_plot)
 dev.off()
 
