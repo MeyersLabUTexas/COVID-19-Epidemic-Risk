@@ -48,15 +48,6 @@ run_df %>%
   map(save_cty_data, case_date = cty_date) 
 
 ## Create maps for figures
-# load specific data set to build maps with
-load(get_save_path(r_not = 1.5, 
-                   detection_probability = 0.1, 
-                   importation_rate = 0,
-                   num_reps = num_runs, 
-                   dir_path = dir_path,
-                   summary = TRUE))
-
-## Plot the various figures
 fig_path = "figures/original_data"
 if(!dir.exists(fig_path)){
   dir.create(fig_path)
@@ -66,13 +57,53 @@ if(is.na(cty_date)){
   cty_date=cty_date[!is.na(cty_date)]
 }
 
-plot_county_risk(cty_data) %>% 
-  save_plot(plot = ., filename = paste0(fig_path, "/us_baseline_risk_map", cty_date[1], ".png"), base_height = 4, base_aspect_ratio = 1.7)
-plot_county_risk(cty_data, state = "Texas") %>% 
-  save_plot(plot = ., filename = paste0(fig_path, "/tx_baseline_risk_map", cty_date[1], ".png"), base_height = 4, base_aspect_ratio = 1.3)
+
+# Loop over all Re/R0 to make maps and save each epi_prob as col in csv
+all_cty_data = data.frame()
+for(i in 1:length(r_not)){
+  # load specific data set to build maps with
+  load(get_save_path(r_not = r_not[i], # 1.1, 1.5, 3
+                     detection_probability = detection_probability[2], # 0.1
+                     importation_rate = importation_rate[1], # 0
+                     num_reps = num_runs, 
+                     dir_path = dir_path,
+                     summary = TRUE))
+  cty_data = cty_data %>%
+    mutate(date = cty_date)
+  
+  ## Plot the various figures
+  png(file=paste0(fig_path, "/us_baseline_risk_map_", cty_date[1], "_", r_not[i], "_og_params.png"),
+      width=5.75,height=3.25, units = "in", res=1200)
+  print(plot_county_risk(cty_data))
+  dev.off()
+  
+  # plot_county_risk(cty_data, state = "Texas") %>%
+  #   save_plot(plot = .,
+  #             filename = paste0(fig_path, "/tx_baseline_risk_map", cty_date[1], ".png"),
+  #             base_height = 4, base_aspect_ratio = 1.3)
+  
+  # Add params to the df
+  cty_data_w_params = cty_data %>%
+    mutate(r_not = r_not[i],
+           detection_probability = detection_probability[2],
+           importation_rate = importation_rate[1], 
+           model_parm_set = "original")
+  
+  all_cty_data = rbind(all_cty_data, cty_data_w_params)
+} # end for i
 
 ## Save data for each date in a csv
-write_csv(cty_data, paste0(dir_path, "/", cty_date, "county-risk-estimates.csv"))
+write_csv(all_cty_data, paste0(dir_path, "/", cty_date, "county-risk-estimates-all-r0.csv"))
+#write_csv(cty_data, paste0(dir_path, "/", cty_date, "county-risk-estimates.csv"))
+
+compare_table = all_cty_data %>%
+  select(r_not, detection_probability,  importation_rate, model_parm_set, date, cases, epi_prob) %>%
+  group_by(r_not, cases) %>%
+  slice(1) %>%
+  ungroup() %>%
+  filter(cases %in% c(0, 1)) %>%
+  mutate(epi_perc = epi_prob*100)
+
 
 ## Plot case summary statistics
 get_all_summary_data(dir_path) %>% 
@@ -84,10 +115,10 @@ get_all_summary_data(dir_path) %>%
 make_case_risk_plot(r_not_vect=r_not, det_prob=0.1, dir_path, fig_path)
 
 ## Get case summary statistics
-get_summary_stats(cty_data, threshold=0.9)
+get_summary_stats(all_cty_data %>% filter(r_not == 1.5), threshold=0.9)
   
 ## Number of county remaining with less than 5 detected cases  
-sub=subset(cty_data, cases<5)
+sub=subset(all_cty_data %>% filter(r_not == 1.5), cases<5)
 length(sub$county)
 
 

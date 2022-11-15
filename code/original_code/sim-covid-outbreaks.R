@@ -330,7 +330,7 @@ save_covid_runs <- function(r_not,
                            base_r_not = r_not, 
                            ...)
   
-  saved_file_path <- get_save_path(r_not, detection_probability, importation_rate, num_reps)
+  saved_file_path <- get_save_path(r_not, detection_probability, importation_rate, num_reps, dir_path)
   if(!file.exists(saved_file_path) | refresh){
     print("Running the simulation")
     sims <- run_n_covid_sims(num_reps, parms)  
