@@ -7,27 +7,32 @@ save_cty_data <- function(data_path, case_date = NULL){
 }
 
 get_cty_data = function(data_path, case_date = NULL){
-  require(usmap)
-  require(scam)
+  #require(usmap)
+  #require(scam)
   
   load(data_path)
-  epi_probs <- get_epidemic_prob_by_d(trials = sims, 
-                                      prev_threshold = 50,
-                                      cum_threshold = 2000, # should match epi_thresh
-                                      max_detect = 210) # the max number of cases to get epi_prob for
-  
-  # Ensure epidemic probabilities are monotonic increasing by fitting scam to data
-  epi_probs$prob_epidemic[is.na(epi_probs$prob_epidemic)]=1
-  scam_convert=scam(formula = epi_probs$prob_epidemic ~ s(epi_probs$detected, k = 25, bs = "micv"))
-  scam_prob_epidemic = scam_convert$fitted.values
-  scam_prob_epidemic[scam_prob_epidemic > 1]=1
-  
-  # write to processed_data folder to use for plotting
-  epi_case_df = data.frame(epi_probs$detected, epi_probs$prob_epidemic, scam_prob_epidemic)
-  names(epi_case_df)=c("detected", "prob_epidemic", "scam_prob_epidemic")
   csv_path=str_replace(string = data_path, pattern = "rda", replacement = "csv")
   epi_path=str_replace(string = csv_path, pattern = "sim", replacement = "epi_prob_data")
-  write.csv(epi_case_df, epi_path, row.names = FALSE)
+  
+  if(file.exists(epi_path)){
+    epi_probs = read_csv(epi_path)
+  }else{
+    epi_probs <- get_epidemic_prob_by_d(trials = sims, 
+                                        prev_threshold = 50,
+                                        cum_threshold = 2000, # should match epi_thresh
+                                        max_detect = 210) # the max number of cases to get epi_prob for
+    epi_probs$prob_epidemic[is.na(epi_probs$prob_epidemic)]=1
+    
+    ## Ensure epidemic probabilities are monotonic increasing by fitting scam to data
+    # scam_convert=scam(formula = epi_probs$prob_epidemic ~ s(epi_probs$detected, k = 25, bs = "micv"))
+    # scam_prob_epidemic = scam_convert$fitted.values
+    # scam_prob_epidemic[scam_prob_epidemic > 1]=1
+    # epi_case_df = data.frame(epi_probs$detected, epi_probs$prob_epidemic, scam_prob_epidemic)
+    # names(epi_case_df)=c("detected", "prob_epidemic", "scam_prob_epidemic")
+    
+    ## write to processed_data folder to use for plotting
+    write.csv(epi_probs, epi_path, row.names = FALSE)
+  }
   
   ## Read in case data and subset to correct date
   ## Defaults to using the most recent case data
@@ -46,40 +51,76 @@ get_cty_data = function(data_path, case_date = NULL){
   ## Read in population data
   pop_data <- read_csv("raw_data/county_pop_2019.csv")
   
-  ## Read in county shapefile data and attach all county information
-  df = usmap::us_map(regions = "counties")  %>% 
-    as_tibble() %>% 
-    distinct(fips, full) %>% 
-    inner_join(pop_data %>% 
-                 mutate(fips = str_pad(as.character(fips), 5, side = "left", pad = "0")), by = "fips") %>% 
-    rename(population = POPESTIMATE2019,
-           county = CTYNAME) %>% 
+  # Read in county shapefile data if it doesn't exist, otherwise create rda
+  if(file.exists('processed_data/us_county_geometries.rda') ){
+    load('processed_data/us_county_geometries.rda')
+    print("us county data loaded")
+  } else{
+    us_county_geo = tidycensus::get_acs(geography="county", variables=c("B01001_001"), 
+                        geometry=TRUE, year=2019, shift_geo = TRUE) %>%
+      separate(NAME, into = c("county", "state"), sep = ", ") %>%
+      rename(fips=GEOID)
+    
+    save(us_county_geo, file = 'processed_data/us_county_geometries.rda')
+    print("us county data saved")
+  }
+  
+  ## Attach all county information
+  shp_file =  us_county_geo %>%
+    inner_join(pop_data %>%
+                 mutate(fips = str_pad(as.character(fips), 5, side = "left", pad = "0")), by = "fips") %>%
+    rename(population = POPESTIMATE2019) %>% # , county = CTYNAME
+    select(-CTYNAME) %>%
     left_join(cty_case_data %>% 
                 select(fips, date, cases, deaths), by = "fips") %>% 
+    
     mutate(cases = ifelse(is.na(cases), 0, cases),
+           deaths = ifelse(is.na(deaths), 0, deaths),
            epi_prob = epi_probs$prob_epidemic[cases+1]) %>% 
-           #epi_prob = scam_prob_epidemic[cases+1]) %>%
-    mutate(epi_prob = ifelse(is.na(epi_prob), 1, epi_prob)) %>% 
-    rename(state = full)
-
-  return(df)
+    #epi_prob = scam_prob_epidemic[cases+1]) %>%
+    mutate(epi_prob = ifelse(is.na(epi_prob), 1, epi_prob)) %>%
+    select(-moe)
+  
+  return(shp_file)
 }
 
 plot_county_risk <- function(county_data, state = NULL){
-  shp_file <- usmap::us_map(regions = "counties")
+  
   if(!is.null(state)){
     shp_file <- shp_file %>% filter(full == state)
   }
-  shp_file %>% 
-    left_join(county_data, by = "fips") %>% 
-    ggplot(aes(x = x, y = y)) +
-    geom_polygon(aes(group = group, fill = epi_prob), color = "black", size = 0.1) +
-    scale_fill_gradient(low = "gainsboro", high = "dark red", name = "Probability")+
+  
+  if(!is.null(state)){
+    county_data <- county_data %>% filter(state == state)
+  }
+  
+  break_min = min(county_data$epi_prob)*100
+  break_min_lab = round(break_min, 0)
+  
+  require(sf)
+  p1 = ggplot(county_data)+
+    geom_sf(mapping=aes(geometry=geometry, fill=epi_prob*100), size = 0.05, color="black")+
+    #geom_polygon(aes(group = group, fill = epi_prob*100), color = "black", size = 0.1) +
+    scale_fill_gradient(low = "gainsboro", high = "dark red", name = "Epidemic Risk (%)",
+                        #breaks=c(break_min, 50, 100), 
+                        #labels=c(break_min_lab, 50, 100), limits=c(break_min,100)
+                        breaks=c(0, 25, 50, 75, 100), 
+                        labels=c(0, 25, 50, 75, 100), limits=c(0,100) )+
     scale_x_continuous("", breaks = NULL) + scale_y_continuous("", breaks = NULL)+
-    #labs(title = paste0("Epidemic Probability per county, Cum. Case by ", case_date, ", R0=",r0)) +
-    theme(panel.background = element_rect(color = "white", fill = "white"),
-          legend.title=element_text(size=8),
-          legend.text=element_text(size=6))
+    theme_void()+
+    theme(
+      legend.position = "right",
+      legend.title=element_text(size=10),
+      legend.text=element_text(size=8),
+      legend.text.align = 1,
+      #legend.key.size = unit(0.5, "lines"),
+      #plot.margin=unit(c(0, 0, 0, 0),"cm"),
+      panel.background  = element_rect(color = "white", fill = "white"),
+      legend.background = element_rect(color = "white", fill = "white"))+
+    guides(fill = guide_colourbar(ticks.colour='black', ticks.linewidth = 0.25, # barheight = unit(2, "in"), 
+                                  border=element_line(color='black')))
+  
+  return(p1)
 }
 
 get_summary_stats <- function(county_df, state_stats = "Texas"){
@@ -133,20 +174,20 @@ make_case_risk_plot=function(folder_path, fig_path, r_not_vect, gen_time, sys_da
     temp_df = cbind(R0, temp_df)
     full_df = rbind(full_df, temp_df)
   }
-  names(full_df) = c("R0", "cases_detected", "epi_prob", "scam_epi_prob")
+  names(full_df) = c("R0", "cases_detected", "epi_prob")
   full_df$R0 = factor(full_df$R0)
   
   full_df=subset(full_df, cases_detected<=50)
   
   ### Plot cases detected by epidemic risk
-  case_risk_plot=ggplot(full_df, aes(x=cases_detected, y=epi_prob, group=R0, color=R0, shape=R0))+
+  case_risk_plot=ggplot(full_df, aes(x=cases_detected, y=epi_prob, group=R0, color=R0))+ # , shape=R0
     geom_line()+
     geom_point()+
     scale_colour_grey()+
     expand_limits(y = 0)+
     xlab("Cumulative reported cases")+
     ylab("Epidemic risk (%)")+
-    labs(color=expression(R[e]), shape=expression(R[e]))+
+    labs(color=expression(R[e]))+ # , shape=expression(R[e])
     theme_bw(base_size = 8)+
     theme(panel.grid.minor = element_line(colour="white", linewidth=0.1)) +
     scale_x_continuous(minor_breaks = seq(0 , 50, 1), breaks = seq(0, 50, 5))+
