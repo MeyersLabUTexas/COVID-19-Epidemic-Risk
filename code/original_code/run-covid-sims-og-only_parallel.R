@@ -23,9 +23,10 @@ run_df           = expand_grid(r_not, gen_interval)
 num_runs         = 100000
 
 ## Run and save simulations across all parameter combinations
-if(!dir.exists("../processed_data/original_params_test/")){
-  dir.create("../processed_data/original_params_test/")
+output_path = "../processed_data/original_params_test"
+if(!dir.exists(output_path)){
+  dir.create(output_path)
 }
 run_df %>% # pipe the 4 inputs into save_covid_runs function, when refresh is FALSE it will not overwrite existing output
-  pmap(.f = save_covid_runs, num_reps = num_runs, refresh=TRUE) %>% 
+  pmap(.f = save_covid_runs, num_reps = num_runs, refresh=TRUE, dir_path=output_path) %>% 
   unlist()

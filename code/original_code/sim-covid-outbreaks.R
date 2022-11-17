@@ -324,6 +324,7 @@ save_covid_runs <- function(r_not,
                             detection_probability, 
                             importation_rate,
                             num_reps,
+                            dir_path,
                             refresh=FALSE, # when TRUE will re-write files
                             ...) {
   parms <- covid_params_fn(intro_rate = importation_rate,
