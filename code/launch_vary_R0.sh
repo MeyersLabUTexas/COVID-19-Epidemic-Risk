@@ -20,8 +20,8 @@ module load launcher
 # Configure launcher
 EXECUTABLE=$TACC_LAUNCHER_DIR/init_launcher
 PRUN=$TACC_LAUNCHER_DIR/paramrun
-CONTROL_FILE=commands_vary_gen_time.txt
-export LAUNCHER_JOB_FILE=commands_vary_gen_time.txt
+CONTROL_FILE=commands_vary_R0.txt
+export LAUNCHER_JOB_FILE=commands_vary_R0.txt
 export LAUNCHER_WORKDIR=`pwd`
 export LAUNCHER_SCHED=interleaved
 
