@@ -164,7 +164,8 @@ get_all_summary_data <- function(folder_path){
 #     theme_bw(base_size = 10)
 # }
 
-make_case_risk_plot=function(folder_path, fig_path, r_not_vect, gen_time, sys_date){
+make_case_risk_plot=function(folder_path, fig_path, r_not_vect, gen_time, sys_date,
+                             county_ex="Travis", state_ex="Texas"){
   ### Open files with epi_prob data for all R0 run and put in one data frame
   full_df=data.frame(R0=double(), cases_detected=double(), epi_prob=double(), scam_epi_prob=double())
   for(val in 1:length(r_not_vect)){
@@ -178,23 +179,44 @@ make_case_risk_plot=function(folder_path, fig_path, r_not_vect, gen_time, sys_da
   full_df$R0 = factor(full_df$R0)
   
   full_df=subset(full_df, cases_detected<=50)
+  full_df$epi_prob = full_df$epi_prob*100 # convert probability to percent
+  
+  county_dates_df <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv") %>%
+    filter(state==state_ex) %>%
+    filter(county==county_ex) %>%
+    arrange(date) %>%
+    slice(1:8) # probably shouldn't be hard coded
+  
+  case1 = county_dates_df$cases[1]
+  label1 =  format(as.Date(county_dates_df$date[1]), "%B %d")
+  case8 = county_dates_df$cases[8]
+  label8 = format(as.Date(county_dates_df$date[8]), "%B %d")
   
   ### Plot cases detected by epidemic risk
-  case_risk_plot=ggplot(full_df, aes(x=cases_detected, y=epi_prob, group=R0, color=R0))+ # , shape=R0
+  case_risk_plot=ggplot(full_df, aes(x=cases_detected, y=epi_prob, group=R0, color=R0, shape=R0))+
+    geom_vline(data=county_dates_df, aes(xintercept = cases[1]), 
+               color="red", alpha=0.5, show.legend = FALSE )+
+    geom_vline(data=county_dates_df, aes(xintercept = cases[8]),
+               color="red", alpha=0.5, show.legend = FALSE)+ 
+    geom_label(aes(x = case1, y = 5 ), label=label1, show.legend = FALSE, size = 2, color="black",
+               inherit.aes = F)+
+    geom_label(aes(x = case8, y = 5 ), label=label8, show.legend = FALSE, size = 2, color="black",
+               inherit.aes = F)+
+    #guides(linetype = guide_legend(override.aes = list(alpha = 0.5), title = ""))+
     geom_line()+
     geom_point()+
     scale_colour_grey()+
     expand_limits(y = 0)+
-    xlab("Cumulative reported cases")+
-    ylab("Epidemic risk (%)")+
-    labs(color=expression(R[e]))+ # , shape=expression(R[e])
+    xlab("Cumulative Reported Cases")+
+    ylab("Epidemic Risk (%)")+
+    labs(color=expression(R[e]), shape=expression(R[e]))+
     theme_bw(base_size = 8)+
-    theme(panel.grid.minor = element_line(colour="white", linewidth=0.1)) +
+    theme(panel.grid.minor = element_line(colour="white", size=0.1)) +
     scale_x_continuous(minor_breaks = seq(0 , 50, 1), breaks = seq(0, 50, 5))+
-    scale_y_continuous(minor_breaks = seq(0.0 , 1.1, 0.1), breaks = seq(0, 1.1, 0.1))
-
-  png(file=paste0(fig_path, "/case_risk_plot_", gen_time, ".png"),
-      width=4.25,height=3.25, units = "in", res=1200)
+    scale_y_continuous(minor_breaks = seq(0 , 110, 1), breaks = seq(0 , 110, 10))
+  
+  png(file=paste0(fig_path, "/case_risk_plot.png"),
+      width=4.75,height=3.25, units = "in", res=1200)
   plot(case_risk_plot)
   dev.off()
 }

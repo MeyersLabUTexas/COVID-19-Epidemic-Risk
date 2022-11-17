@@ -1,13 +1,19 @@
 #####################################################################
 # Call plotting functions on the separate set of parameter choices
-# that became available in late 2020 or beyond
-# Done in response to reviewer Nov. 2022
+# "retrospective model" as oppose to code original "real-time" model
+# Done in response to reviewers Nov. 2022
 #####################################################################
 
 # Load libararies and plotting functions
 library(rtZIKVrisk)
 library(tidyverse)
 source("code/covid-plotting-fxns.R")
+
+# Get county specific R0 from pre-lockdowns early 2020
+if(!file.exists("processed_data/county_specific_R0.csv")){
+  source("code/get_county_specific_R0.R")
+  get_county_specific_R0()
+}
 
 fig_dir = "figures/inf_period_6"
 if(!dir.exists(fig_dir)){
@@ -29,8 +35,7 @@ sys_date= unique(sim_params$sys_date)
 cty_date_vect=c("2020-03-16", "2020-03-23", "2020-04-13") # date to get cumulative cases
 
 R0_round_counties_all_dates = data.frame()
-urb_rural_R0_counties_all_dates = data.frame()
-for(j in 2:3){ #1:length(cty_date_vect)
+for(j in 1:length(cty_date_vect)){
   all_cty_data = data.frame() 
   for(i in 1:length(r0_vect)){
     path = paste0(data_dir, "/", file_list[i])
@@ -57,74 +62,41 @@ for(j in 2:3){ #1:length(cty_date_vect)
   R0_round_counties = read_csv("processed_data/county_specific_R0.csv") %>%
     left_join(all_cty_data %>% rename( R0_round = r_not) %>% mutate(R0_round = as.double(R0_round)), 
               by=c("fips", "R0_round"))
-  write.csv(R0_round_counties, paste0(data_dir, "/", cty_date_vect[j],"_R0_round_counties.csv"), 
-            row.names = F)
+  save(R0_round_counties, file = paste0(data_dir, "/", cty_date_vect[j],"_R0_round_counties.csv"))
+  
   R0_round_counties_all_dates = rbind(R0_round_counties_all_dates, R0_round_counties)
   
+  ## Fig 1
   # Save plot based on inputs
   us_plot_r0_round = plot_county_risk(county_data = R0_round_counties)
   png(file=paste0(fig_dir, "/us_map_R0_round_counties_", cty_date_vect[j], ".png"),
       width=5.25,height=3.25, units = "in", res=1200)
   plot(us_plot_r0_round)
   dev.off()
-  
-  # Urban-rural 
-  urb_rural_R0_counties = read_csv("processed_data/county_specific_R0.csv") %>%
-    left_join(all_cty_data %>% rename(mean_R0_spr_grp_round = r_not) %>% 
-                mutate(mean_R0_spr_grp_round = as.double(mean_R0_spr_grp_round)), 
-              by=c("fips", "mean_R0_spr_grp_round"))
-  write.csv(urb_rural_R0_counties, paste0(data_dir, "/", cty_date_vect[j], "_urb_rural_R0_counties.csv"), 
-            row.names = F)
-  urb_rural_R0_counties_all_dates = rbind(urb_rural_R0_counties_all_dates, urb_rural_R0_counties)
-  
-  # Save plot based on inputs
-  us_plot_r0_urb_rural = plot_county_risk(county_data = urb_rural_R0_counties)
-  png(file=paste0(fig_dir, "/us_map_R0_urb_rural_counties_", cty_date_vect[j], ".png"),
-      width=5.25,height=3.25, units = "in", res=1200)
-  plot(us_plot_r0_urb_rural)
-  dev.off()
 } # end for j
 
 # Write epi_prob for all dates and counties to file
+save(R0_round_counties_all_dates, file = paste0(data_dir, "/", "all_dates_R0_round_counties.csv"))
+
+# Commas in geometry mess up the csv
 R0_round_counties_all_dates = R0_round_counties_all_dates %>%
-  rename(R0_round_epi_prob = epi_prob)
+  select(-geometry)
 write.csv(R0_round_counties_all_dates, paste0(data_dir, "/", "all_dates_R0_round_counties.csv"), 
           row.names = F)
 
-r0_diff = urb_rural_R0_counties_all_dates %>%
-  rename(urb_rural_R0_epi_prob = epi_prob) %>%
-  left_join(R0_round_counties_all_dates %>% select(fips, date, R0_round_epi_prob), by=c("fips", "date")) %>%
-  mutate(R0_diff = R0_round - mean_R0_spr_grp_round,
-         epi_prob_diff = R0_round_epi_prob - urb_rural_R0_epi_prob)
-  
-write.csv(r0_diff, paste0(data_dir, "/", "all_dates_R0_compare_counties.csv"), 
-          row.names = F)
-
-## Compare R0 differences across dates
-r0_compare = ggplot(r0_diff %>% drop_na(date), aes(x=R0_diff, epi_prob_diff, color=date))+
-  geom_point(alpha=0.25)+
-  facet_wrap(~date)+
-  theme_bw()
-png(file=paste0(fig_dir, "/epi_prob_compare.png"),
-    width=7.25,height=5.25, units = "in", res=1200)
-plot(r0_compare)
-dev.off()
-
-# Get all the summary 
-df = get_all_summary_data(folder_path = data_dir)
-
-# Make 
-
-min(r0_diff$R0_round, na.rm = T)
-max(r0_diff$R0_round, na.rm = T)
-median(unique(r0_diff$R0_round), na.rm = T)
+## Fig 2
+# Compare epi risk across 4 R0: min, median, max, and 1.1 which may have occured after lockdown
+min_r0 = min(R0_round_counties$R0_round, na.rm = T)
+max_r0 = max(R0_round_counties$R0_round, na.rm = T)
+med_r0 = median(unique(R0_round_counties$R0_round), na.rm = T)
+travis_r0 = R0_round_counties$R0_round[R0_round_counties$fips=="48453"] # 2
 
 # need to add Travis County March 13 and 20 line
-make_case_risk_plot(folder_path = data_dir, fig_path=fig_dir, r_not_vect=r0_vect[2:], 
-                    sys_date=sys_date, gen_time = gen_time)
+make_case_risk_plot(folder_path=data_dir, fig_path=fig_dir, r_not_vect=c(1.1, min_r0, med_r0, max_r0),
+                    sys_date=sys_date, gen_time=gen_time)
 
 
-
+## Fig 3?
 
 
 

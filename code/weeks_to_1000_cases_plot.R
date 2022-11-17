@@ -2,17 +2,19 @@
 
 library(tidyverse)
 library(scales)
-load("processed_data/sim_1.5_0.1_0_1e+05.rda")
-get_cum_detections_through_time <- function(df) {
-  df %>% 
-    group_by(Cum_Detections) %>% 
-    filter(time == min(time)) %>% 
-    select(time, detected_cases = Cum_Detections)
-}
+
+load("processed_data/inf_period_6/sim_2.8_6_1e+05_2022-11-14.rda")
+# get_cum_detections_through_time <- function(df) {
+#   df %>% 
+#     group_by(Cum_Detections) %>% 
+#     filter(time == min(time)) %>% 
+#     select(time, detected_cases = Cum_Detections)
+# }
+
 df <- sims %>% 
   bind_rows(.id = "sim_num") %>% 
   as_tibble() %>% 
-  select(sim_num, time, ninf = Cumulative_Infections, n_det = Cum_Detections)
+  select(sim_num, time, ninf = Cumulative_Infections, n_det = Cum_Detections) # time is in days
 df %>% 
   group_by(sim_num, n_det) %>% 
   filter(time == min(time)) %>% 
@@ -47,15 +49,25 @@ time_results <- temp %>%
   summarize(avg_time = mean(time_diff),
             med_time = median(time_diff),
             lb = quantile(time_diff, probs = 0.025),
-            ub = quantile(time_diff, probs = 0.975))
+            ub = quantile(time_diff, probs = 0.975),
+            med_time_wk = med_time/7,
+            lb_wk = lb/7,
+            ub_wk = ub/7)
 time_results %>% 
   filter(n_det <= 50) %>% 
-  ggplot(aes(n_det, med_time/7, ymin = lb/7, ymax = ub/7)) + 
-  geom_point() + 
-  geom_errorbar() +
-  scale_x_continuous(breaks=seq(0,50, 10), labels = c("0", "10th", "20th", "30th", "40th", "50th"))+
-  cowplot::background_grid(major = "xy", minor = "xy") +
-  labs(x = "Reported Case", y = "Time to 1,000 Cumulative Cases (Weeks)")+
+  ggplot(aes(n_det, med_time_wk, ymin = lb_wk, ymax = ub_wk))+ 
+  geom_point()+ 
+  geom_errorbar()+
+  scale_x_continuous(breaks=seq(0,50, 10))+ # , labels = c("0", "10th", "20th", "30th", "40th", "50th")
+  cowplot::background_grid(major = "xy", minor = "xy")+
+  labs(x = "Cumulative Reported Cases", y = "Weeks to 1,000 Cumulative Infections")+
   theme_bw(base_size = 8) -> p1
-cowplot::save_plot("figures/time-to-1k-cases.png", plot = p1, base_height = 4.1, base_aspect_ratio = 1.1)
-time_results %>% write_csv("processed_data/time_results.csv")
+
+png(file="figures/inf_period_6/time-to-1k-cases.png",
+    width=4.25,height=3.25, units = "in", res=1200)
+plot(p1)
+dev.off()
+
+time_results %>% write_csv("processed_data/inf_period_6/time_results.csv")
+
+

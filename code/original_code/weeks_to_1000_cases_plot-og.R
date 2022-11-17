@@ -54,16 +54,19 @@ time_results <- temp %>%
   group_by(n_det) %>% # per total detected cases, get the median+CI days it took to reach 1000 cases
   summarize(med_time = median(time_diff),
             lb = quantile(time_diff, probs = 0.025),
-            ub = quantile(time_diff, probs = 0.975))
+            ub = quantile(time_diff, probs = 0.975),
+            med_time_wk = med_time/7,
+            lb_wk = lb/7,
+            ub_wk = ub/7)
 
 time_results %>% 
   filter(n_det <= 50) %>%
-  ggplot(aes(n_det, med_time/7, ymin = lb/7, ymax = ub/7)) + 
+  ggplot(aes(n_det, med_time_wk, ymin = lb_wk, ymax = ub_wk))+ 
   geom_point() + 
   geom_errorbar() +
   scale_x_continuous(breaks=seq(0, 50, 10))+ #, labels = c("0", "10th", "20th", "30th", "40th", "50th"))+
   cowplot::background_grid(major = "xy", minor = "xy") +
-  labs(x = "Cumulative reported cases", y = "Weeks to 1,000 cumulative infections")+
+  labs(x = "Cumulative Reported Cases", y = "Weeks to 1,000 Cumulative Infections")+
   theme_bw(base_size = 8) -> p1
 
 png(file="figures/original_data/time-to-1k-cases.png",

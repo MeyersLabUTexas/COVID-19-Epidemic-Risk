@@ -1,6 +1,6 @@
-####################################################################
-## Retrospective code for running and saving all COVID simulations
-####################################################################
+##############################################################
+## Real-time code for running and saving all COVID simulations
+##############################################################
 # Run from inside the code dir
 
 library(tidyverse)
@@ -8,12 +8,12 @@ library(tidyverse)
 
 ## Check file with list of parameters exists
 an.error.occured1 <- FALSE 
-tryCatch( { result <- file.exists("sim-covid-outbreaks.R"); print(result) },
+tryCatch( { result <- file.exists("original_code/sim-covid-outbreaks.R"); print(result) },
           warning = function(w) { print("Can't find the file you're looking for") },
           error = function(e) {an.error.occured1 <<- TRUE})
 stopifnot(an.error.occured1==FALSE)
-source("sim-covid-outbreaks.R")
-print("sim file found/added")
+source("original_code/sim-covid-outbreaks.R")
+print("og sim file found/added")
 
 ## Setup all of the parameters that need to be run
 args             = commandArgs(TRUE)
@@ -23,10 +23,9 @@ run_df           = expand_grid(r_not, gen_interval)
 num_runs         = 100000
 
 ## Run and save simulations across all parameter combinations
-if(!dir.exists("../processed_data/")){
-  dir.create("../processed_data/")
+if(!dir.exists("../processed_data/original_params_test/")){
+  dir.create("../processed_data/original_params_test/")
 }
 run_df %>% # pipe the 4 inputs into save_covid_runs function, when refresh is FALSE it will not overwrite existing output
   pmap(.f = save_covid_runs, num_reps = num_runs, refresh=TRUE) %>% 
   unlist()
-

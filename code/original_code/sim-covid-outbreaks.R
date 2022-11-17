@@ -48,7 +48,8 @@ covid_params_fn = function(base_r_not           = 1.5,
 #' A function to run multiple covid simulations with the same parameters
 #' @return A list of length num_reps, where each component is a single call to run_covid_sim.
 run_n_covid_sims <- function(num_reps, ...) {
-  plyr::rlply(.n = num_reps, .expr = run_covid_sim(...) )
+  #plyr::rlply(.n = num_reps, .expr = run_covid_sim(...) )
+  map(seq_len(num_reps), ~run_covid_sim(parms))
 }
 
 #' Update state movement
