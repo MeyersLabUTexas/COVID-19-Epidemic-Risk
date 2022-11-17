@@ -3,6 +3,5 @@
 .RData
 .Ruserdata
 processed_data/
-code/*.e
-code/*.o
 figures/
+code/e_o_files/
