@@ -25,6 +25,4 @@ output_path = "../processed_data/original_params_test"
 if(!dir.exists(output_path)){
   dir.create(output_path)
 }
-r_not %>% # pipe the 4 inputs into save_covid_runs function, when refresh is FALSE it will not overwrite existing output
-  pmap(.f = save_covid_runs, num_reps = num_runs, refresh=TRUE, dir_path=output_path) %>% 
-  unlist()
+save_covid_runs(r_not=r_not, num_reps = num_runs, refresh=TRUE, dir_path=output_path)
