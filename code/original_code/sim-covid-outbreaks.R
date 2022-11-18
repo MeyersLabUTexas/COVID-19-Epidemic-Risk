@@ -320,10 +320,10 @@ get_save_path <- function(r_not,
   }
 }
 
-save_covid_runs <- function(r_not, 
-                            detection_probability, 
-                            importation_rate,
-                            num_reps,
+save_covid_runs <- function(r_not=1.5, 
+                            detection_probability=0.1, 
+                            importation_rate=0,
+                            num_reps=100000,
                             dir_path,
                             refresh=FALSE, # when TRUE will re-write files
                             ...) {
