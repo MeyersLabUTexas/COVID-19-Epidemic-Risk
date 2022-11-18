@@ -1,5 +1,5 @@
 Rscript --no-save run-covid-sims-only_parallel.R 0.95 6
 Rscript --no-save run-covid-sims-only_parallel.R 1.05 6
-Rscript --no-save original_code/run-covid-sims-og-only_parallel.R 0.95 6
-Rscript --no-save original_code/run-covid-sims-og-only_parallel.R 1.05 6
+Rscript --no-save original_code/run-covid-sims-og-only_parallel.R 0.95
+Rscript --no-save original_code/run-covid-sims-og-only_parallel.R 1.05
 

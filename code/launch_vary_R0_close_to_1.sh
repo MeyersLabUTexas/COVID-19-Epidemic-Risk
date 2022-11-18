@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH -J vary_gen_time                 # Job name
-#SBATCH -o vary_gen_time.%j.o            # Name of stdout output file (%j expands to jobId)
-#SBATCH -e vary_gen_time.%j.e            # Name of stdout output file (%j expands to jobId)
+#SBATCH -J vary_R0_close1                # Job name
+#SBATCH -o vary_R0_close1.%j.o           # Name of stdout output file (%j expands to jobId)
+#SBATCH -e vary_R0_close1.%j.e           # Name of stdout output file (%j expands to jobId)
 #SBATCH -p normal                        # Queue name, small is for <=2 nodes
 #SBATCH -N 3                   	         # Total number of nodes requested (24 cores/node)
 #SBATCH -n 4                             # Total number of tasks to run
