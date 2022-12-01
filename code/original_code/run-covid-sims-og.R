@@ -42,7 +42,7 @@ run_df %>%
 ## Get all simulation county data pre-processed
 # need to run to update counties with most recent case data
 # Going to compare 2020-03-16 and 2020-04-13, then  2020-03-16 and 2020-03-23 in retrospective
-cty_date = "2020-03-16" # supplying specific date instead of most recent in NYT data set
+cty_date = "2020-04-13" # supplying specific date instead of most recent in NYT data set
 run_df %>% 
   pmap(.f = get_save_path, num_reps = num_runs, dir_path=dir_path) %>% 
   map(save_cty_data, case_date = cty_date) 
@@ -93,7 +93,7 @@ for(i in 1:length(r_not)){
 } # end for i
 
 ## Save data for each date in a csv
-write_csv(all_cty_data, paste0(dir_path, "/", cty_date, "county-risk-estimates-all-r0.csv"))
+save(all_cty_data, file=paste0(dir_path, "/", cty_date, "county-risk-estimates-all-r0.rda"))
 #write_csv(cty_data, paste0(dir_path, "/", cty_date, "county-risk-estimates.csv"))
 
 compare_table = all_cty_data %>%
@@ -105,7 +105,7 @@ compare_table = all_cty_data %>%
   mutate(epi_perc = epi_prob*100)
 
 
-## Plot case summary statistics
+## Plot sensitivity about detection probability
 get_all_summary_data(dir_path) %>% 
   plot_county_summary_sensitivity() %>% 
   save_plot(plot = ., filename = paste0(fig_path, "/us_sensitivity_plot.png"), 
@@ -120,5 +120,17 @@ get_summary_stats(all_cty_data %>% filter(r_not == 1.5), threshold=0.9)
 ## Number of county remaining with less than 5 detected cases  
 sub=subset(all_cty_data %>% filter(r_not == 1.5), cases<5)
 length(sub$county)
+
+## 
+
+
+
+
+
+
+
+
+
+
 
 
