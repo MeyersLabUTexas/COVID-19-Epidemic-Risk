@@ -86,8 +86,8 @@ epi_plot=
   geom_line(aes(y=prob_increase10, color="10", linetype= "10"), linewidth=0.3)+
   geom_point(aes(y=prob_increase10, color="10", shape="10"), size=1)+
   scale_x_continuous(breaks=seq(0, 10, 1), label=mean_se_df$epi_label)+
-  labs(x = "Cumulative reported cases (March 16)",
-       y = "Percent counties with increase in cases (March 23)",
+  labs(x = "Cumulative Reported Cases (March 16)",
+       y = "Percent Counties with Increase in Cases (March 23)",
        color = "Increase by \nat least",
        shape = "Increase by \nat least",
        linetype = "Increase by \nat least")+
