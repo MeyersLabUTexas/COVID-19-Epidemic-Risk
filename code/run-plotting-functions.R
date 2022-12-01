@@ -7,6 +7,7 @@
 # Load libararies and plotting functions
 library(rtZIKVrisk)
 library(tidyverse)
+library(cowplot)
 source("code/covid-plotting-fxns.R")
 
 # Get county specific R0 from pre-lockdowns early 2020
@@ -35,34 +36,42 @@ sys_date= unique(sim_params$sys_date)
 cty_date_vect=c("2020-03-16", "2020-03-23", "2020-04-13") # date to get cumulative cases
 
 R0_round_counties_all_dates = data.frame()
+plot_list = rep(list(NA), length(cty_date_vect))
 for(j in 1:length(cty_date_vect)){
-  all_cty_data = data.frame() 
-  for(i in 1:length(r0_vect)){
-    path = paste0(data_dir, "/", file_list[i])
+  outfile = paste0(data_dir, "/", cty_date_vect[j], "_county-risk-estimates-all-r0.rda")
+  if(!file.exists(outfile)){
+    all_cty_data = data.frame() 
+    for(i in 1:length(r0_vect)){
+      print( paste0("Date=", cty_date_vect[j], " R0=", r0_vect[i]) )
+      path = paste0(data_dir, "/", file_list[i])
+      
+      # Create epi_prob_data and cty_data
+      save_cty_data(data_path = path, case_date = cty_date_vect[j])
+      
+      # Load data created in save_cty_data and generate plot
+      load(paste0(data_dir, "/county-summary_",
+                  sim_params$r_not[i], "_", sim_params$gen_time[i], "_",
+                  sim_params$n_sim[i], "_", sys_date, ".rda")) # cty_data
+      cty_data_w_params = cty_data %>% # Save params to county data
+        mutate(r_not = sim_params$r_not[i],
+               model_parm_set = "retrospective",
+               date=cty_date_vect[j])
+      all_cty_data = rbind(all_cty_data, cty_data_w_params)
+    } # end for i
     
-    # Create epi_prob_data and cty_data
-    save_cty_data(data_path = path, case_date = cty_date_vect[j])
-    
-    # Load data created in save_cty_data and generate plot
-    load(paste0(data_dir, "/county-summary_",
-                sim_params$r_not[i], "_", sim_params$gen_time[i], "_",
-                sim_params$n_sim[i], "_", sys_date, ".rda")) # cty_data
-    cty_data_w_params = cty_data %>% # Save params to county data
-      mutate(r_not = sim_params$r_not[i],
-             model_parm_set = "alternate",
-             date=cty_date_vect[j])
-    all_cty_data = rbind(all_cty_data, cty_data_w_params)
-  } # end for i
-  
-  ## Save data for each date in a csv
-  write.csv(all_cty_data, paste0(data_dir, "/", cty_date_vect[j], "_county-risk-estimates-all-r0.csv"), 
-            row.names = F)
+    ## Save data for each date in a rda, this is a big unfiltered file
+    save(all_cty_data, file=paste0(data_dir, "/", cty_date_vect[j], "_county-risk-estimates-all-r0.rda"))
+  }else{
+    load(outfile) # loads all_cty_data
+  }
   
   ## Select county epi_prob based on R0 of either rounded counties R0 estimate or urban/rural designation
-  R0_round_counties = read_csv("processed_data/county_specific_R0.csv") %>%
-    left_join(all_cty_data %>% rename( R0_round = r_not) %>% mutate(R0_round = as.double(R0_round)), 
-              by=c("fips", "R0_round"))
-  save(R0_round_counties, file = paste0(data_dir, "/", cty_date_vect[j],"_R0_round_counties.csv"))
+  R0_round_counties = read_csv("processed_data/county_specific_R0.csv", col_types = c("fips"="c")) %>%
+    mutate(fips = str_pad(as.character(fips), 5, side = "left", pad = "0")) %>%
+    left_join(all_cty_data %>% rename(R0_round = r_not) %>% mutate(R0_round = as.double(R0_round)), 
+              by=c("fips", "R0_round")) %>%
+    drop_na()
+  save(R0_round_counties, file = paste0(data_dir, "/", cty_date_vect[j],"_R0_round_counties.rda"))
   
   R0_round_counties_all_dates = rbind(R0_round_counties_all_dates, R0_round_counties)
   
@@ -73,19 +82,40 @@ for(j in 1:length(cty_date_vect)){
       width=5.25,height=3.25, units = "in", res=1200)
   plot(us_plot_r0_round)
   dev.off()
+  
+  # save plot to list without legend
+  plot_list[[j]] = ggplotGrob(us_plot_r0_round+theme(legend.position="none"))
 } # end for j
 
 # Write epi_prob for all dates and counties to file
-save(R0_round_counties_all_dates, file = paste0(data_dir, "/", "all_dates_R0_round_counties.csv"))
+save(R0_round_counties_all_dates, file = paste0(data_dir, "/", "all_dates_R0_round_counties.rda"))
 
-# Commas in geometry mess up the csv
-R0_round_counties_all_dates = R0_round_counties_all_dates %>%
-  select(-geometry)
-write.csv(R0_round_counties_all_dates, paste0(data_dir, "/", "all_dates_R0_round_counties.csv"), 
-          row.names = F)
+## Combine plots
+# These don't look good so I combined plots in a seperate app
+legend = get_legend(us_plot_r0_round)
+plot_grid(plot_list[[1]], plot_list[[3]], legend, rel_heights = c(1, 1, .1), nrow=1)
+
+## Summary stats
+epi_prob_date_case = R0_round_counties_all_dates %>%
+  group_by(date, cases) %>%
+  drop_na() %>%
+  summarise(min_epi = min(epi_prob),
+            max_epi = max(epi_prob) )
+
+R0_round_counties_all_dates %>%
+  drop_na() %>%
+  group_by(date) %>%
+  summarise(total_county = n(),
+            county_50 = sum(epi_prob>0.5),
+            perc_50 = round((county_50/total_county)*100, 0),
+            total_pop = sum(population),
+            pop_50 = sum(population[epi_prob>0.5]),
+            per_pop_50 = round((pop_50/total_pop)*100, 0) )
+
+
 
 ## Fig 2
-# Compare epi risk across 4 R0: min, median, max, and 1.1 which may have occured after lockdown
+# Compare epi risk across 4 R0: min, median, max, and 1.1 which may have occurred after lock-down
 min_r0 = min(R0_round_counties$R0_round, na.rm = T)
 max_r0 = max(R0_round_counties$R0_round, na.rm = T)
 med_r0 = median(unique(R0_round_counties$R0_round), na.rm = T)
@@ -96,8 +126,8 @@ make_case_risk_plot(folder_path=data_dir, fig_path=fig_dir, r_not_vect=c(1.1, mi
                     sys_date=sys_date, gen_time=gen_time)
 
 
-## Fig 3?
-
+## Fig 3
+# weeks_to_1000_cases_plot.R
 
 
 
