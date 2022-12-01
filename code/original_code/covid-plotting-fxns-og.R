@@ -132,19 +132,20 @@ get_all_summary_data <- function(folder_path){
     select(-starts_with("junk"))
 }
 
-### Fig S1
+### Fig S6
 plot_county_summary_sensitivity <- function(df){
   df %>% 
     select(-frac_state_counties, - frac_state_population) %>% 
     gather(key, value, frac_us_population, frac_us_counties) %>% 
     mutate(key = ifelse(key == 'frac_us_population', "US Population", "US Counties")) %>% 
-    ggplot(aes(detection_probability, value, color = as.factor(r_not), group = r_not, shape=as.factor(r_not)))+
-    geom_line(size=1) + 
+    ggplot(aes(detection_probability, value, color=as.factor(r_not), 
+               group=r_not, shape=as.factor(r_not)))+
+    geom_line(linewidth=1) + 
     geom_point(size=2) +
     scale_y_continuous(labels = scales::percent, limits = c(0,1))+
     facet_wrap(~key) +
     background_grid(major = 'xy')+
-    labs(color  = expression(R[e]), shape=expression(R[e]), linetype=expression(R[e]))+
+    labs(color=expression(R[e]), shape=expression(R[e]), linetype=expression(R[e]))+
     xlab("Case Detection Probability")+
     ylab("Percent")+
     scale_color_manual(values=c("#999999", "grey39", "#000000"))+
@@ -153,8 +154,7 @@ plot_county_summary_sensitivity <- function(df){
 
 
 ### Fig 2
-make_case_risk_plot=function(r_not_vect, det_prob, dir_path, fig_path, 
-                             county_ex="Travis", state_ex="Texas"){
+make_case_risk_plot=function(r_not_vect, det_prob, dir_path, fig_path){ #, county_ex="Travis", state_ex="Texas"
   # Open files with epi_prob data for all R0 run and put in one data frame
   full_df=data.frame(R0=double(), cases_detected=double(), epi_prob=double(), scam_epi_prob=double())
   for(val in 1:length(r_not_vect)){
@@ -170,37 +170,37 @@ make_case_risk_plot=function(r_not_vect, det_prob, dir_path, fig_path,
   full_df=subset(full_df, cases_detected<=50)
   full_df$epi_prob = full_df$epi_prob*100 # convert probability to percent
   
-  county_dates_df <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv") %>%
-    filter(state==state_ex) %>%
-    filter(county==county_ex) %>%
-    arrange(date) %>%
-    slice(1:8)
+  # county_dates_df <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv") %>%
+  #   filter(state==state_ex) %>%
+  #   filter(county==county_ex) %>%
+  #   arrange(date) %>%
+  #   slice(1:8)
   
-  case1 = county_dates_df$cases[1]
-  label1 =  format(as.Date(county_dates_df$date[1]), "%B %d")
-  case8 = county_dates_df$cases[8]
-  label8 = format(as.Date(county_dates_df$date[8]), "%B %d")
+  # case1 = county_dates_df$cases[1]
+  # label1 =  format(as.Date(county_dates_df$date[1]), "%B %d")
+  # case8 = county_dates_df$cases[8]
+  # label8 = format(as.Date(county_dates_df$date[8]), "%B %d")
   
   # Plot cases detected by epidemic risk
   case_risk_plot=ggplot(full_df, aes(x=cases_detected, y=epi_prob, group=R0, color=R0, shape=R0))+
-    geom_vline(data=county_dates_df, aes(xintercept = cases[1]), 
-               color="red", alpha=0.5, show.legend = FALSE )+
-    geom_vline(data=county_dates_df, aes(xintercept = cases[8]),
-               color="red", alpha=0.5, show.legend = FALSE)+ 
-    geom_label(aes(x = case1, y = 5 ), label=label1, show.legend = FALSE, size = 2, color="black",
-               inherit.aes = F)+
-    geom_label(aes(x = case8, y = 5 ), label=label8, show.legend = FALSE, size = 2, color="black",
-               inherit.aes = F)+
+    # geom_vline(data=county_dates_df, aes(xintercept = cases[1]), 
+    #            color="red", alpha=0.5, show.legend = FALSE )+
+    # geom_vline(data=county_dates_df, aes(xintercept = cases[8]),
+    #            color="red", alpha=0.5, show.legend = FALSE)+ 
+    # geom_label(aes(x = case1, y = 5 ), label=label1, show.legend = FALSE, size = 2, color="black",
+    #            inherit.aes = F)+
+    # geom_label(aes(x = case8, y = 5 ), label=label8, show.legend = FALSE, size = 2, color="black",
+    #            inherit.aes = F)+
     #guides(linetype = guide_legend(override.aes = list(alpha = 0.5), title = ""))+
     geom_line()+
     geom_point()+
     scale_colour_grey()+
     expand_limits(y = 0)+
-    xlab("Cumulative reported cases")+
-    ylab("Epidemic risk (%)")+
+    xlab("Cumulative Reported Cases")+
+    ylab("Epidemic Risk (%)")+
     labs(color=expression(R[e]), shape=expression(R[e]))+
     theme_bw(base_size = 8)+
-    theme(panel.grid.minor = element_line(colour="white", size=0.1)) +
+    theme(panel.grid.minor = element_line(colour="white", linewidth=0.1)) +
     scale_x_continuous(minor_breaks = seq(0 , 50, 1), breaks = seq(0, 50, 5))+
     scale_y_continuous(minor_breaks = seq(0 , 110, 1), breaks = seq(0 , 110, 10))
     
