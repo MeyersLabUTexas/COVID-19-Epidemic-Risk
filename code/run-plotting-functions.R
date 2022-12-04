@@ -1,7 +1,7 @@
 #####################################################################
 # Call plotting functions on the separate set of parameter choices
 # "retrospective model" as oppose to code original "real-time" model
-# Done in response to reviewers Nov. 2022
+# Done in response to reviewers Dec.10.2022
 #####################################################################
 
 # Load libararies and plotting functions
@@ -67,10 +67,10 @@ for(j in 1:length(cty_date_vect)){
   
   ## Select county epi_prob based on R0 of either rounded counties R0 estimate or urban/rural designation
   R0_round_counties = read_csv("processed_data/county_specific_R0.csv", col_types = c("fips"="c")) %>%
-    mutate(fips = str_pad(as.character(fips), 5, side = "left", pad = "0")) %>%
+    mutate(fips = str_pad(as.character(fips), 5, side = "left", pad = "0")) %>% # 3,142 counties
     left_join(all_cty_data %>% rename(R0_round = r_not) %>% mutate(R0_round = as.double(R0_round)), 
-              by=c("fips", "R0_round")) %>%
-    drop_na()
+              by=c("fips", "R0_round")) #%>%
+    #drop_na() # this was dropping the na of R0.pred which is all Alaska and Hawaii
   save(R0_round_counties, file = paste0(data_dir, "/", cty_date_vect[j],"_R0_round_counties.rda"))
   
   R0_round_counties_all_dates = rbind(R0_round_counties_all_dates, R0_round_counties)
@@ -91,26 +91,44 @@ for(j in 1:length(cty_date_vect)){
 save(R0_round_counties_all_dates, file = paste0(data_dir, "/", "all_dates_R0_round_counties.rda"))
 
 ## Combine plots
-# These don't look good so I combined plots in a seperate app
+# These don't look good so I combined plots in a separate app
 legend = get_legend(us_plot_r0_round)
 plot_grid(plot_list[[1]], plot_list[[3]], legend, rel_heights = c(1, 1, .1), nrow=1)
 
 ## Summary stats
+# load(file = paste0(data_dir, "/", "all_dates_R0_round_counties.rda"))
 epi_prob_date_case = R0_round_counties_all_dates %>%
   group_by(date, cases) %>%
-  drop_na() %>%
   summarise(min_epi = min(epi_prob),
-            max_epi = max(epi_prob) )
+            max_epi = max(epi_prob),
+            mean_epi = mean(epi_prob),
+            lb = quantile(epi_prob, probs = 0.025),
+            ub = quantile(epi_prob, probs = 0.975))
 
 R0_round_counties_all_dates %>%
-  drop_na() %>%
+  group_by(date) %>%
+  summarise(med_epi = median(epi_prob),
+            mean_epi = mean(epi_prob),
+            lb = quantile(epi_prob, probs = 0.025),
+            ub = quantile(epi_prob, probs = 0.975))
+
+R0_round_counties_all_dates %>%
   group_by(date) %>%
   summarise(total_county = n(),
-            county_50 = sum(epi_prob>0.5),
-            perc_50 = round((county_50/total_county)*100, 0),
             total_pop = sum(population),
-            pop_50 = sum(population[epi_prob>0.5]),
-            per_pop_50 = round((pop_50/total_pop)*100, 0) )
+            perc_50 = round((sum(epi_prob>0.5)/total_county)*100, 0),
+            per_pop_50 = round((sum(population[epi_prob>0.5])/total_pop)*100, 0),
+            perc_90 = round((sum(epi_prob>0.9)/total_county)*100, 0),
+            per_pop_90 = round((sum(population[epi_prob>0.9])/total_pop)*100, 0) ) #,
+            # perc_case_1 = round(sum(cases>=1)/total_county*100, 0),
+            # perc_pop_1 = round(sum(population[cases>=1])/total_pop*100, 0) )
+
+# Get total deaths in 2020
+total_death_2020 = read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv") %>%
+  filter(date =="2020-12-31") %>%
+  filter(fips %in% R0_round_counties_all_dates$fips) %>% # missing counties have 0 cases reported
+  summarize(all_case = sum(cases),
+            all_death = sum(deaths))
 
 
 
