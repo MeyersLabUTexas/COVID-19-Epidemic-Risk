@@ -35,9 +35,11 @@ dir_path = "processed_data/original_data"
 if(!dir.exists(dir_path)){
   dir.create(dir_path)
 }
-run_df %>% 
-  pmap(.f = save_covid_runs, num_reps = num_runs) %>% 
-  unlist()
+
+# Only need to run these lines of code if you need to run all the simulations for first time
+# run_df %>% 
+#   pmap(.f = save_covid_runs, num_reps = num_runs) %>% 
+#   unlist()
 
 ## Get all simulation county data pre-processed
 # need to run to update counties with most recent case data
@@ -62,6 +64,7 @@ if(is.na(cty_date)){
 all_cty_data = data.frame()
 for(i in 1:length(r_not)){
   # load specific data set to build maps with
+  print(paste0("Date ", cty_date, "and R0=", r_not[i]))
   load(get_save_path(r_not = r_not[i], # 1.1, 1.5, 3
                      detection_probability = detection_probability[2], # 0.1
                      importation_rate = importation_rate[1], # 0
@@ -76,11 +79,7 @@ for(i in 1:length(r_not)){
       width=5.75,height=3.25, units = "in", res=1200)
   print(plot_county_risk(cty_data))
   dev.off()
-  
-  # plot_county_risk(cty_data, state = "Texas") %>%
-  #   save_plot(plot = .,
-  #             filename = paste0(fig_path, "/tx_baseline_risk_map", cty_date[1], ".png"),
-  #             base_height = 4, base_aspect_ratio = 1.3)
+  print("plot finished")
   
   # Add params to the df
   cty_data_w_params = cty_data %>%
@@ -90,10 +89,11 @@ for(i in 1:length(r_not)){
            model_parm_set = "original")
   
   all_cty_data = rbind(all_cty_data, cty_data_w_params)
+  print("Data appended")
 } # end for i
 
 ## Save data for each date in a csv
-save(all_cty_data, file=paste0(dir_path, "/", cty_date, "county-risk-estimates-all-r0.rda"))
+save(all_cty_data, file=paste0(dir_path, "/", cty_date, "county-risk-estimates-all-r0_", cty_date,".rda"))
 #write_csv(cty_data, paste0(dir_path, "/", cty_date, "county-risk-estimates.csv"))
 
 compare_table = all_cty_data %>%
@@ -108,7 +108,7 @@ compare_table = all_cty_data %>%
 ## Plot sensitivity about detection probability
 get_all_summary_data(dir_path) %>% 
   plot_county_summary_sensitivity() %>% 
-  save_plot(plot = ., filename = paste0(fig_path, "/us_sensitivity_plot.png"), 
+  save_plot(plot = ., filename = paste0(fig_path, "/us_sensitivity_plot_", cty_date, ".png"), 
             base_height = 4, base_aspect_ratio = 1.5)
 
 ## Plot cases by epidemic risk for all R0
