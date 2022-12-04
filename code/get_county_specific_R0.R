@@ -14,7 +14,19 @@ get_county_specific_R0 = function(){
     rename(fips = `FIPS code`) %>%
     mutate(fips = str_pad(as.character(fips), 5, side = "left", pad = "0"))
 
+  load("processed_data/original_data/county-summary_1.1_0.1_0_1e+05.rda") # load cty_data
+  # These locations appear in the county_desig but are not in original analysis of 3,142 counties
+  # fips  `State Abr.` `County name`                     
+  # 02201  AK           Prince of Wales-Outer Ket        
+  # 02232  AK           Skagway-Hoonah-Angoon Census Area 
+  # 02270  AK           Wade Hampton Census Area          
+  # 02280  AK           Wrangell-Petersburg Census Area   
+  # 46113  SD           Shannon County                   
+  # 51515  VA           Bedford city 
+  # 51560  VA           Clifton Forge city                
+  
   county_join = county_desig %>%
+    filter(fips %in% cty_data$fips) %>% # get only the 3,142 counties from real-time analysis
     left_join(county_r0, by="fips") %>%
     mutate(R0_round_missing = round(R0.pred, 1)) %>%
     group_by(`2013 code`) %>%
