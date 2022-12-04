@@ -54,9 +54,9 @@ both_date_df$at_least_1_case[both_date_df$diff_cases<1] = 0
 # at least an increase by 5 in 1 week
 both_date_df$at_least_5_case[both_date_df$diff_cases>=5] = 1
 both_date_df$at_least_5_case[both_date_df$diff_cases<5] = 0
-# at least an increase by 10 in 1 week
-both_date_df$at_least_10_case[both_date_df$diff_cases>=10] = 1
-both_date_df$at_least_10_case[both_date_df$diff_cases<10] = 0
+# at least an increase by 2 in 1 week
+both_date_df$at_least_2_case[both_date_df$diff_cases>=2] = 1
+both_date_df$at_least_2_case[both_date_df$diff_cases<2] = 0
 
 mean_se_df = both_date_df %>%
   group_by(case_label) %>%
@@ -65,7 +65,7 @@ mean_se_df = both_date_df %>%
             stderr = sd(diff_cases)/sqrt(num_counties),
             prob_increase1 = sum(at_least_1_case)/num_counties*100, # multiply by 100 to turn prob into percent
             prob_increase5 = sum(at_least_5_case)/num_counties*100,
-            prob_increase10 = sum(at_least_10_case)/num_counties*100) %>%
+            prob_increase2 = sum(at_least_2_case)/num_counties*100) %>%
   ungroup()
 mean_se_df$axis_label = paste0(mean_se_df$case_label, " (", mean_se_df$num_counties, ")")
 mean_se_df$axis_label[11] = "10+ (65)"
@@ -81,25 +81,25 @@ epi_plot=
   geom_ribbon(aes(ymin=prob_epidemic*100, ymax=prob_epidemic3*100, fill="Estimated"), alpha = 0.1)+
   geom_line(aes(y=prob_increase1, color="1", linetype= "1"), linewidth=0.3)+
   geom_point(aes(y=prob_increase1, color="1", shape="1"), size=1)+
+  geom_line(aes(y=prob_increase2, color="2", linetype= "2"), linewidth=0.3)+
+  geom_point(aes(y=prob_increase2, color="2", shape="2"), size=1)+
   geom_line(aes(y=prob_increase5, color="5", linetype= "5"), linewidth=0.3)+
   geom_point(aes(y=prob_increase5, color="5", shape="5"), size=1)+
-  geom_line(aes(y=prob_increase10, color="10", linetype= "10"), linewidth=0.3)+
-  geom_point(aes(y=prob_increase10, color="10", shape="10"), size=1)+
   scale_x_continuous(breaks=seq(0, 10, 1), label=mean_se_df$epi_label)+
   labs(x = "Cumulative Reported Cases (March 16)",
        y = "Percent Counties with Increase in Cases (March 23)",
        color = "Increase by \nat least",
        shape = "Increase by \nat least",
        linetype = "Increase by \nat least")+
-  scale_color_manual(labels=c("1 case", "5 cases", "10 cases"), #expression(paste( "Estimated, ", R[0], "=1.5", sep="")), expression(paste( "Estimated, ", R[0], "=3.0", sep="")
+  scale_color_manual(labels=c("1 case", "2 cases", "5 cases"), #expression(paste( "Estimated, ", R[0], "=1.5", sep="")), expression(paste( "Estimated, ", R[0], "=3.0", sep="")
                      values=c("gray55", "grey35", "black"),
-                     breaks=c("1", "5", "10"))+
-  scale_shape_manual(labels=c("1 case", "5 cases", "10 cases"), 
+                     breaks=c("1", "2", "5"))+
+  scale_shape_manual(labels=c("1 case", "2 cases", "5 cases"), 
                      values = c(19, 19, 19), 
-                     breaks = c("1", "5", "10"))+
-  scale_linetype_manual(labels=c("1 case", "5 cases", "10 cases"), 
+                     breaks = c("1", "2", "5"))+
+  scale_linetype_manual(labels=c("1 case", "2 cases", "5 cases"), 
                         values = c("dashed", "dashed", "dashed"), 
-                        breaks = c("1", "5", "10"))+
+                        breaks = c("1", "2", "5"))+
   scale_fill_manual(name = '',  values=c("Estimated" = "red"))+
   theme_bw(base_size = 8)+
   theme(panel.grid.minor = element_blank(), legend.text.align=0, panel.grid.major.x = element_blank()) #legend.position = c(0.8, 0.28)
@@ -121,9 +121,9 @@ confint(mylogit1)
 mylogit5 = glm(at_least_5_case ~ case_label, data = both_date_df, family = "binomial")
 summary(mylogit5)
 confint(mylogit5)
-mylogit10 = glm(at_least_10_case ~ case_label, data = both_date_df, family = "binomial")
-summary(mylogit10)
-confint(mylogit10)
+mylogit2 = glm(at_least_2_case ~ case_label, data = both_date_df, family = "binomial")
+summary(mylogit2)
+confint(mylogit2)
 
 
 
