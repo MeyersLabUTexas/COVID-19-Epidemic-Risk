@@ -132,7 +132,7 @@ get_all_summary_data <- function(folder_path){
     select(-starts_with("junk"))
 }
 
-### Fig S6
+### Fig S1
 plot_county_summary_sensitivity <- function(df){
   df %>% 
     select(-frac_state_counties, - frac_state_population) %>% 
