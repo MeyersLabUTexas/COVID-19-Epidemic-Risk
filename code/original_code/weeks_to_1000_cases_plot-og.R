@@ -55,7 +55,7 @@ for(i in 1:2){
                  rename(time1k = time) , by = "sim_num") %>% 
     ungroup() %>% 
     mutate(time_diff = time1k-time) # total days it took to reach 1000 cases
-  
+
   time_results <- temp %>% 
     group_by(n_det) %>% # per total detected cases, get the median+CI days it took to reach 1000 cases
     summarize(med_time = median(time_diff),
@@ -65,6 +65,7 @@ for(i in 1:2){
               lb_wk = lb/7,
               ub_wk = ub/7)
   
+  # Plot
   temp = time_results %>% 
     filter(n_det <= 50) %>%
     ggplot(aes(n_det, med_time_wk, ymin = lb_wk, ymax = ub_wk))+ 
@@ -85,6 +86,7 @@ for(i in 1:2){
   } # end if
 } # end for i
 
+# Save plot
 png(file="figures/original_data/time-to-1k-cases.png",
     width=6.75,height=3.25, units = "in", res=1200)
 cowplot::plot_grid(plot_list[[1]], plot_list[[2]], align = "h", 
