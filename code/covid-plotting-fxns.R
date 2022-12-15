@@ -209,7 +209,7 @@ make_case_risk_plot=function(folder_path, fig_path, r_not_vect, gen_time, sys_da
     expand_limits(y = 0)+
     xlab("Cumulative Reported Cases")+
     ylab("Epidemic Risk (%)")+
-    labs(color=expression(R[0]), shape=expression(R[0]))+
+    labs(color=expression(R[e]), shape=expression(R[e]))+
     theme_bw(base_size = 8)+
     theme(panel.grid.minor = element_line(colour="white", size=0.1)) +
     scale_x_continuous(minor_breaks = seq(0 , 50, 1), breaks = seq(0, 50, 5))+
