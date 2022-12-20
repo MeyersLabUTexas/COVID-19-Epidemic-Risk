@@ -115,6 +115,7 @@ plot(epi_plot)
 dev.off()
 
 # Logistic Regression and plot
+# Exponentiate log odds to get odds
 mylogit1 = glm(at_least_1_case ~ case_label, data = both_date_df, family = "binomial")
 summary(mylogit1)
 confint(mylogit1)
@@ -124,7 +125,6 @@ confint(mylogit5)
 mylogit2 = glm(at_least_2_case ~ case_label, data = both_date_df, family = "binomial")
 summary(mylogit2)
 confint(mylogit2)
-
 
 
 

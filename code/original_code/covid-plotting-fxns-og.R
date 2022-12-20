@@ -143,13 +143,19 @@ plot_county_summary_sensitivity <- function(df){
     geom_line(linewidth=1) + 
     geom_point(size=2) +
     scale_y_continuous(labels = scales::percent, limits = c(0,1))+
-    facet_wrap(~key) +
+    facet_wrap(~key, scales = "free_y", ncol = 2, 
+               strip.position = "left", 
+               labeller = as_labeller(c(`US Population` = "Percent Population with Over 50% Risk", 
+                                        `US Counties` = "Percent Counties with Over 50% Risk") )  ) +
     background_grid(major = 'xy')+
     labs(color=expression(R[e]), shape=expression(R[e]), linetype=expression(R[e]))+
-    xlab("Case Detection Probability")+
-    ylab("Percent")+
     scale_color_manual(values=c("#999999", "grey39", "#000000"))+
-    theme_bw(base_size = 10)
+    theme_bw(base_size = 10)+
+    xlab("Case Detection Probability")+
+    ylab(NULL) +
+    theme(strip.background = element_blank(),
+          strip.placement = "outside",
+          strip.text = element_text(size = 10))
 }
 
 

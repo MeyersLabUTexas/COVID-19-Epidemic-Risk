@@ -44,7 +44,7 @@ if(!dir.exists(dir_path)){
 ## Get all simulation county data pre-processed
 # need to run to update counties with most recent case data
 # Going to compare 2020-03-16 and 2020-04-13, then  2020-03-16 and 2020-03-23 in retrospective
-cty_date = "2020-04-13" # supplying specific date instead of most recent in NYT data set
+cty_date = "2020-03-16" # supplying specific date instead of most recent in NYT data set
 run_df %>% 
   pmap(.f = get_save_path, num_reps = num_runs, dir_path=dir_path) %>% 
   map(save_cty_data, case_date = cty_date) 
@@ -106,10 +106,11 @@ compare_table = all_cty_data %>%
 
 
 ## Plot sensitivity about detection probability
-get_all_summary_data(dir_path) %>% 
-  plot_county_summary_sensitivity() %>% 
-  save_plot(plot = ., filename = paste0(fig_path, "/us_sensitivity_plot_", cty_date, ".png"), 
-            base_height = 4, base_aspect_ratio = 1.5)
+df  = get_all_summary_data(dir_path)
+
+plot_county_summary_sensitivity(df) %>% 
+  save_plot(plot = ., filename = paste0(fig_path, "/new_us_sensitivity_plot_", cty_date, ".png"), 
+            base_height = 4, base_aspect_ratio = 1.75)
 
 ## Plot cases by epidemic risk for all R0
 make_case_risk_plot(r_not_vect=r_not, det_prob=0.1, dir_path, fig_path)

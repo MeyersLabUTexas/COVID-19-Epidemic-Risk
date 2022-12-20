@@ -149,9 +149,9 @@ pred_epi_prob %>%
   geom_abline(slope = 1, intercept = 0) +
   background_grid(major = 'xy') +
   scale_color_manual(values = c('grey', 'grey40', 'black')) +
-  labs(x = 'Real-time Estimated Epidemic Risk (March 16)', 
+  labs(x = 'Original Estimated Epidemic Risk (March 16)', 
        y = 'Retrospective Estimated Epidemic Risk (March 16)',
-       color = expression('Real-time\nAssumed R'[e])) +
+       color = expression('Original\nAssumed R'[e])) +
   scale_y_continuous(labels = scales::label_percent(), breaks = c(0, .25, .5, .75, 1), limits = c(0,1)) +
   scale_x_continuous(labels = scales::label_percent(), breaks = c(0, .25, .5, .75, 1), limits = c(0,1)) -> epi_prob_comparison
 epi_prob_comparison
