@@ -20,7 +20,7 @@ args                  = commandArgs(TRUE)
 r_not                 = as.double(args[1]) # R0 = 1.1, 1.5, 3
 
 ## Run and save simulations across all parameter combinations
-output_path = "../processed_data/original_params_test"
+output_path = "../../processed_data/original_params_test"
 if(!dir.exists(output_path)){
   dir.create(output_path)
 }
